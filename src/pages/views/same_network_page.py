@@ -137,6 +137,14 @@ class SameNetworkPage(QWidget):
         direction_1 = getNetworkAddress(ip1, normalized_mask1) == getNetworkAddress(ip2, normalized_mask1)
         direction_2 = getNetworkAddress(ip2, normalized_mask2) == getNetworkAddress(ip1, normalized_mask2)
 
+        # ==========================================
+        # AJOUT : Enregistrement en base de données SQLite 3
+        # avec le tag de l'employé connecté (et écrasement si existant)
+        # ==========================================
+        from ...services.database import Database
+        db = Database()
+        db.save_f6_same_network(ip1, normalized_mask1, ip2, normalized_mask2)
+
         if same_network:
             self.result.setText("Même réseau dans les deux sens")
             self.result.setStyleSheet("color: #22c55e;")

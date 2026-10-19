@@ -159,6 +159,15 @@ class GetSubnetPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
 
+
+        # ==========================================
+        # AJOUT : Enregistrement en base de données SQLite 3
+        # avec le tag de l'employé connecté (et écrasement si existant)
+        # ==========================================
+        from ...services.database import Database
+        db = Database()
+        db.save_f5_subnet(ip, normalized_mask)
+
         self.result.setText(
             "Réseau de classe (Majeur) : "
             f"{class_network}\n"
