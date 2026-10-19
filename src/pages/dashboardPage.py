@@ -94,7 +94,7 @@ class DashboardWindow(QWidget):
             ("Validation IP", "Vérifie si une adresse IPv4 a le bon format", QIcon(os.path.join(icons_dir, "ip.svg")), IsIpPage()),
             ("Classe IP", "Détermine la classe et signale les IP privées ou réservées", QIcon(os.path.join(icons_dir, "class.svg")), GetIpClassPage()),
             ("Masque de classe", "Retourne le masque par défaut selon la classe IP", QIcon(os.path.join(icons_dir, "mask.svg")), GetIpClassMaskPage()),
-            ("Réseau classful", "Calcule l'adresse réseau avec une IP et un masque classful", QIcon(os.path.join(icons_dir, "subnet.svg")), GetSubnetPage()),
+            ("Réseau et sous-réseau", "Calcule l'adresse réseau et sous-réseau d'une adresse IP et un masque", QIcon(os.path.join(icons_dir, "subnet.svg")), GetSubnetPage()),
             ("Même réseau", "Vérifie si deux IP sont dans le même réseau", QIcon(os.path.join(icons_dir, "subnet.svg")), SameNetworkPage()),
         ]
 

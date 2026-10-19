@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from ...services.logic import ClassMask, getIPClass, getIPClassMask
+from ...services.logic import ClassMask, getIPClass, getIPClassMask, getIpError
 
 
 
@@ -104,7 +104,7 @@ class GetIpClassMaskPage(QWidget):
             return
 
         if mask == ClassMask.ERROR.value:
-            self.result.setText("Adresse IP invalide")
+            self.result.setText(getIpError(ip) or "Adresse IP invalide")  #Va rechercher le message d'erreur correspondant à l'erreur
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("INVALIDE")
             self.status_badge.setObjectName("badgeInvalid")

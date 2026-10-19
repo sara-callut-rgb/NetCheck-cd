@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from ...services.logic import isIp
+from ...services.logic import isIp, getIpError
 
 
 
@@ -107,5 +107,5 @@ class IsIpPage(QWidget):
             self.status_badge.setObjectName("badgeInvalid")
             self.status_badge.style().unpolish(self.status_badge)
             self.status_badge.style().polish(self.status_badge)
-            self.result_message.setText("Adresse IP invalide")
+            self.result_message.setText(getIpError(ip) or "Adresse IP invalide")
             self.result_message.setStyleSheet("color: #ef4444;")

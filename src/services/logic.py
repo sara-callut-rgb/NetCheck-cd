@@ -9,25 +9,24 @@ class ClassMask(Enum):
     CLASS_E = "N/A_E"
     ERROR = "error"
 
-
-
-def isIp(ip: str) -> bool:
-    if type(ip) is not str:
-        return False
+def getIpError(ip: str) -> str | None:
+    if type(ip) is not str or ip.strip() == "":
+        return "Veuillez entrer une adresse IP."
 
     parts = ip.split(".")
     if len(parts) != 4:
-        return False
+        return "Attention ! Une adresse IP contient 4 octets."
 
     for part in parts:
-        if not part.isdigit():
-            return False
+        if not (part.isdigit()):
+            return "Veuillez ne rentrer que des chiffres."
+        if int(part) > 255:
+            return "Veuillez entrer des nombres compris entre 0 et 255."
 
-        value = int(part)
-        if value is None or value < 0 or value > 255:
-            return False
+    return None
 
-    return True
+def isIp(ip: str) -> bool:
+    return getIpError(ip) is None
 
 def parseMask(mask: str) -> str | None:
     if type(mask) is not str:
