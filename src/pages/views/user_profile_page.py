@@ -130,22 +130,6 @@ class UserProfilePage(QWidget):
             self.selection_label = QLabel("Sélection: aucune")
             self.selection_label.setObjectName("statusMessage")
 
-            self.add_username_input = QLineEdit()
-            self.add_username_input.setObjectName("primaryInput")
-            self.add_username_input.setPlaceholderText("Nom d'utilisateur")
-            self.add_username_input.setMinimumHeight(40)
-
-            self.add_password_input = QLineEdit()
-            self.add_password_input.setObjectName("primaryInput")
-            self.add_password_input.setPlaceholderText("Mot de passe temporaire")
-            self.add_password_input.setEchoMode(QLineEdit.Password)
-            self.add_password_input.setMinimumHeight(40)
-
-            self.add_role_input = QComboBox()
-            self.add_role_input.setObjectName("primaryInput")
-            self.add_role_input.addItems(["membre", "admin"])
-            self.add_role_input.setMinimumHeight(40)
-
             self.edit_username_input = QLineEdit()
             self.edit_username_input.setObjectName("primaryInput")
             self.edit_username_input.setPlaceholderText("Nom d'utilisateur")
@@ -161,12 +145,6 @@ class UserProfilePage(QWidget):
             self.edit_role_input.setObjectName("primaryInput")
             self.edit_role_input.addItems(["membre", "admin"])
             self.edit_role_input.setMinimumHeight(40)
-
-            add_button = QPushButton("Ajouter")
-            add_button.setObjectName("actionButton")
-            add_button.setCursor(Qt.PointingHandCursor)
-            add_button.clicked.connect(self.add_user)
-            add_button.setFixedSize(120, 36)
 
             self.update_button = QPushButton("Modifier")
             self.update_button.setObjectName("actionButton")
@@ -186,35 +164,8 @@ class UserProfilePage(QWidget):
             self.delete_button.clicked.connect(self.delete_user)
             self.delete_button.setFixedSize(120, 36)
 
-            self.add_message = QLabel("")
-            self.add_message.setObjectName("statusMessage")
-
             self.edit_message = QLabel("")
             self.edit_message.setObjectName("statusMessage")
-
-            # --- Carte ajout ---
-            add_card = QFrame()
-            add_card.setObjectName("toolCard")
-            add_layout = QVBoxLayout(add_card)
-            add_layout.setContentsMargins(16, 14, 16, 14)
-            add_layout.setSpacing(12)
-
-            add_title = QLabel("Ajouter un utilisateur")
-            add_title.setObjectName("resultIp")
-
-            add_fields = QFormLayout()
-            add_fields.setLabelAlignment(Qt.AlignLeft)
-            add_fields.setFormAlignment(Qt.AlignTop)
-            add_fields.setHorizontalSpacing(10)
-            add_fields.setVerticalSpacing(8)
-            add_fields.addRow(QLabel("Nom d'utilisateur"), self.add_username_input)
-            add_fields.addRow(QLabel("Mot de passe temporaire"), self.add_password_input)
-            add_fields.addRow(QLabel("Rôle"), self.add_role_input)
-
-            add_actions = QHBoxLayout()
-            add_actions.setSpacing(8)
-            add_actions.addWidget(add_button)
-            add_actions.addStretch(1)
 
             # --- Carte edition ---
             edit_card = QFrame()
@@ -243,11 +194,6 @@ class UserProfilePage(QWidget):
             edit_actions.addWidget(self.delete_button)
             edit_actions.addStretch(1)
 
-            add_layout.addWidget(add_title)
-            add_layout.addLayout(add_fields)
-            add_layout.addLayout(add_actions)
-            add_layout.addWidget(self.add_message)
-
             edit_layout.addWidget(edit_title)
             edit_layout.addLayout(edit_fields)
             edit_layout.addLayout(edit_actions)
@@ -255,7 +201,6 @@ class UserProfilePage(QWidget):
 
             admin_layout.addLayout(header_row)
             admin_layout.addWidget(self.user_table, 1)
-            admin_layout.addWidget(add_card)
             admin_layout.addWidget(edit_card)
 
             card_layout.addWidget(admin_card)
@@ -279,13 +224,7 @@ class UserProfilePage(QWidget):
         self.reset_password_button.setEnabled(enabled)
 
     def set_admin_message(self, text, is_error=False):
-        self.set_add_message("")
         self.set_edit_message("")
-
-    def set_add_message(self, text, is_error=False):
-        color = "#ff8da1" if is_error else "#a7f3d0"
-        self.add_message.setStyleSheet(f"color: {color};")
-        self.add_message.setText(text)
 
     def set_edit_message(self, text, is_error=False):
         color = "#ff8da1" if is_error else "#a7f3d0"
@@ -346,24 +285,6 @@ class UserProfilePage(QWidget):
         locked_until = self.user_metadata.get(selected_username, {}).get("locked_until")
         self.lock_until_input.setText(self._format_timestamp(locked_until) if locked_until else "")
         self._set_action_state(True)
-
-    def add_user(self):
-        username = self.add_username_input.text().strip()
-        password = self.add_password_input.text().strip()
-        role = self.add_role_input.currentText()
-
-        if not username or not password:
-            self.set_add_message("Nom d'utilisateur et mot de passe obligatoires.", True)
-            return
-
-        if self.db.addUser(username, password, role, is_temporary=True):
-            self.set_add_message("Utilisateur ajouté avec succès.")
-            self.add_username_input.clear()
-            self.add_password_input.clear()
-            self.refresh_users()
-            return
-
-        self.set_add_message("Échec de l'ajout (nom déjà pris).", True)
 
     def update_user(self):
         username = self.edit_username_input.text().strip()

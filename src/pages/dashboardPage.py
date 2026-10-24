@@ -12,6 +12,7 @@ from .views import (
     GetIpClassPage,
     GetSubnetPage,
     IsIpPage,
+    RegisterPage,
     SameNetworkPage,
     UserProfilePage,
     GetSubnetSplitPage
@@ -100,7 +101,10 @@ class DashboardWindow(QWidget):
             #Ajout de la nouvelle fonctionnalité
             ("Découpe en SR", "Découpe un réseau en sous-réseaux de même taille à partir du nombre de SR", QIcon(os.path.join(icons_dir, "subnet.svg")), GetSubnetSplitPage()),
         ]
-
+        #Ajout de la page d'inscription pour les utilisateurs avec le rôle "admin"
+        if str(role).lower() == "admin":
+            pages.append(("Inscription", "Ajoute un nouvel utilisateur (réservé aux admins)", QIcon(os.path.join(icons_dir, "ip.svg")), RegisterPage()))
+        
         self.button_group = QButtonGroup(self)
         self.button_group.setExclusive(True)
         self.page_descriptions = {}
@@ -115,6 +119,9 @@ class DashboardWindow(QWidget):
             btn.setCheckable(True)
             btn.setObjectName("navButton")
             btn.setCursor(Qt.PointingHandCursor)
+            #Forme de bouton différent pour l'inscription
+            if name == "Inscription":
+                btn.setStyleSheet("border-radius: 24px;")
             btn.clicked.connect(lambda _checked, idx=index, title=name: self.switch_page(idx, title))
             self.button_group.addButton(btn)
             nav_layout.addWidget(btn)
