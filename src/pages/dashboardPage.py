@@ -13,7 +13,8 @@ from .views import (
     GetSubnetPage,
     IsIpPage,
     SameNetworkPage,
-    UserProfilePage
+    UserProfilePage,
+    GetSubnetSplitPage
 )
 
 
@@ -96,6 +97,8 @@ class DashboardWindow(QWidget):
             ("Masque de classe", "Retourne le masque par défaut selon la classe IP", QIcon(os.path.join(icons_dir, "mask.svg")), GetIpClassMaskPage()),
             ("Réseau et sous-réseau", "Calcule l'adresse réseau et sous-réseau d'une adresse IP et un masque", QIcon(os.path.join(icons_dir, "subnet.svg")), GetSubnetPage()),
             ("Même réseau", "Vérifie si deux IP sont dans le même réseau", QIcon(os.path.join(icons_dir, "subnet.svg")), SameNetworkPage()),
+            #Ajout de la nouvelle fonctionnalité
+            ("Découpe en SR", "Découpe un réseau en sous-réseaux de même taille à partir du nombre de SR", QIcon(os.path.join(icons_dir, "subnet.svg")), GetSubnetSplitPage()),
         ]
 
         self.button_group = QButtonGroup(self)

@@ -125,7 +125,7 @@ class SameNetworkPage(QWidget):
             return
 
         if not isSubnetMask(normalized_mask1) or not isSubnetMask(normalized_mask2):
-            self.result.setText("Masque invalide")
+            self.result.setText(f"Masque 1 : {getMaskError(mask1)}" if getMaskError(mask1) else f"Masque 2 : {getMaskError(mask2)}")    #Correction du message d'erreur
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("ERREUR")
             self.status_badge.setObjectName("badgeInvalid")

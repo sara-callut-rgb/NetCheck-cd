@@ -150,10 +150,6 @@ def getIPClass(ip: str) -> ClassMask:
 
     return ClassMask.ERROR
 
-
-
-
-
 def isClassFull(mask: str) -> bool:
     normalized = parseMask(mask)
     if not normalized:
@@ -164,7 +160,6 @@ def isClassFull(mask: str) -> bool:
         ClassMask.CLASS_B.value,
         ClassMask.CLASS_C.value,
     }
-
 
 def isPrivateIp(ip: str) -> bool:
     if not isIp(ip):
@@ -293,3 +288,63 @@ def genererTableauCIDR() -> list[list[str]]:
         tableResult.append(line)
 
     return tableResult
+
+
+#----------- NOUVELLE FONCTIONNALITE ----------- 
+def _intToIp(value: int) -> str:
+    octets = []
+    for power in (3, 2, 1, 0):
+        octets.append(str(value // 2 ** (8 * power) % 256))
+    return ".".join(octets)
+
+
+def getSubnetSplit(ip: str, mask: str, nb_subnets: int) -> tuple[list[dict], str | None]:
+    """Découpe classique en sous-réseaux de même taille.
+    Renvoie (liste des sous-réseaux, message d'erreur ou None)."""
+    error = getIpError(ip)
+    if error:
+        return [], error
+
+    error = getMaskError(mask)
+    if error:
+        return [], error
+    normalized = parseMask(mask)
+
+    if type(nb_subnets) is not int or nb_subnets < 1:
+        return [], "Il faut au moins 1 sous-réseau."
+
+    # Longueur du masque de départ = nombre de bits à 1
+    prefix = "".join(int_to_bin(int(o)) for o in normalized.split(".")).count("1")
+
+    # Bits à emprunter : plus petit n tel que 2^n - 1 >= nombre de SR demandés
+    # (-1 car le dernier SR, celui dont tous les bits valent 1, n'est pas utilisable)
+    bits = 1
+    while 2 ** bits - 1 < nb_subnets:
+        bits += 1
+
+    new_prefix = prefix + bits
+    if new_prefix > 30:
+        return [], f"Découpe impossible : /{new_prefix} ne laisse plus de place pour des machines (maximum /30)."
+
+    # Adresse du réseau de départ, convertie en entier
+    parts = [int(p) for p in getNetworkAddress(ip, normalized).split(".")]
+    network_int = parts[0] * 2 ** 24 + parts[1] * 2 ** 16 + parts[2] * 2 ** 8 + parts[3]
+
+    size = 2 ** (32 - new_prefix)               # nombre d'adresses par SR
+    octet_index = (new_prefix - 1) // 8 + 1     # octet où se lit le "pas"
+    step = 2 ** (8 * octet_index - new_prefix)
+
+    rows = []
+    for i in range(nb_subnets):
+        start = network_int + i * size
+        rows.append({
+            "sr": i + 1,
+            "address": _intToIp(start),
+            "first": _intToIp(start + 1),
+            "last": _intToIp(start + size - 2),
+            "broadcast": _intToIp(start + size - 1),
+            "mask": f"/{new_prefix}",
+            "step": f"{step} sur {octet_index}{'er' if octet_index == 1 else 'ème'} octet",
+            "hosts": size - 2,
+        })
+    return rows, None
