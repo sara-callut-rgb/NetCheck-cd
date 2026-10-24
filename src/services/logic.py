@@ -9,6 +9,7 @@ class ClassMask(Enum):
     CLASS_E = "N/A_E"
     ERROR = "error"
 
+#Modification du message d'erreur pour les adresses IP invalides
 def getIpError(ip: str) -> str | None:
     if type(ip) is not str or ip.strip() == "":
         return "Veuillez entrer une adresse IP."
@@ -70,6 +71,35 @@ def isSubnetMask(mask: str) -> bool:
         bits.append(int_to_bin(value))
 
     return "01" not in "".join(bits)
+
+#Vérification des messages d'erreur des masques
+def getMaskError(mask: str) -> str | None:
+    if type(mask) is not str or mask.strip() == "":
+        return "Veuillez entrer un masque."
+
+    cleaned = mask.strip()
+    if cleaned.startswith("/"):
+        cleaned = cleaned[1:]
+
+    if cleaned.isascii() and cleaned.isdigit():
+        if int(cleaned) > 32:
+            return "Un masque CIDR doit être compris entre /0 et /32."
+        return None
+
+    parts = cleaned.split(".")
+    if len(parts) != 4:
+        return "Attention ! Un masque contient 4 octets."
+
+    for part in parts:
+        if not (part.isascii() and part.isdigit()):
+            return "Un masque ne contient que des chiffres."
+        if int(part) > 255:
+            return "Veuillez entrer des nombres compris entre 0 et 255."
+
+    if not isSubnetMask(cleaned):
+        return "Masque invalide."
+
+    return None
 
 def getNetworkAddress(ip: str, mask: str) -> str:
     normalized = parseMask(mask)

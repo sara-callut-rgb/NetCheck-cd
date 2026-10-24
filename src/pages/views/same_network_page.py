@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from ...services.logic import areIpsInSameNetwork, getNetworkAddress, isIp, isSubnetMask, parseMask
+from ...services.logic import areIpsInSameNetwork, getIpError, getMaskError, getNetworkAddress, isIp, isSubnetMask, parseMask
 
 
 
@@ -107,7 +107,7 @@ class SameNetworkPage(QWidget):
         self.result_card.setVisible(True)
 
         if not isIp(ip1) or not isIp(ip2):
-            self.result.setText("Adresse IP invalide")
+            self.result.setText(f"IP1 : {getIpError(ip1)}" if getIpError(ip1) else f"IP2 : {getIpError(ip2)}")    #Correction du messag d'erreur
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("ERREUR")
             self.status_badge.setObjectName("badgeInvalid")
@@ -116,7 +116,7 @@ class SameNetworkPage(QWidget):
             return
 
         if not normalized_mask1 or not normalized_mask2:
-            self.result.setText("Masque invalide")
+            self.result.setText(f"Masque 1 : {getMaskError(mask1)}" if getMaskError(mask1) else f"Masque 2 : {getMaskError(mask2)}")   #Correction du message d'erreur
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("ERREUR")
             self.status_badge.setObjectName("badgeInvalid")

@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
-from ...services.logic import ClassMask, getIPClass, getIPClassMask, getNetworkAddress, getSubnet, isClassFull, isIp, isSubnetMask, parseMask
+from ...services.logic import ClassMask, getIPClass, getIPClassMask, getIpError, getMaskError, getNetworkAddress, getSubnet, isClassFull, isIp, isSubnetMask, parseMask
 
 
 
@@ -92,7 +92,7 @@ class GetSubnetPage(QWidget):
         self.result_card.setVisible(True)
 
         if not isIp(ip):
-            self.result.setText("Adresse IP invalide")
+            self.result.setText(getIpError(ip) or "Adresse IP invalide")   #Correction du message d'erreur
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("ERREUR")
             self.status_badge.setObjectName("badgeInvalid")
@@ -101,7 +101,7 @@ class GetSubnetPage(QWidget):
             return
 
         if not normalized_mask or not isSubnetMask(normalized_mask):
-            self.result.setText("Masque invalide")
+            self.result.setText(getMaskError(mask) or "Masque invalide")   #Correction du message d'erreur
             self.result.setStyleSheet("color: #ef4444;")
             self.status_badge.setText("ERREUR")
             self.status_badge.setObjectName("badgeInvalid")
@@ -109,10 +109,11 @@ class GetSubnetPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
 
-        if not isClassFull(normalized_mask):
-            self.result.setText("Ce calcul n'accepte que des masques classful")
+        #Correction de l'erreur de calcul
+        if getIPClass(ip) in (ClassMask.CLASS_A, ClassMask.CLASS_B, ClassMask.CLASS_C) and getNetworkAddress(normalized_mask, getIPClassMask(ip)) != getIPClassMask(ip):
+            self.result.setText("Le masque ne correspond pas à la classe de l'adresse IP")
             self.result.setStyleSheet("color: #f59e0b;")
-            self.status_badge.setText("NON CLASSFUL")
+            self.status_badge.setText("ERREUR")
             self.status_badge.setObjectName("badgeWarn")
             self.status_badge.style().unpolish(self.status_badge)
             self.status_badge.style().polish(self.status_badge)
