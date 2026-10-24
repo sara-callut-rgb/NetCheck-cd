@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ...services.logic import areIpsInSameNetwork, getIpError, getMaskError, getNetworkAddress, isIp, isSubnetMask, parseMask
-
+from ...services.database import Database
 
 
 class SameNetworkPage(QWidget):

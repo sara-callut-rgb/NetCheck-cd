@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ...services.logic import ClassMask, getIPClass, getIPClassMask, getIpError
-
+from ...services.database import Database
 
 
 class GetIpClassMaskPage(QWidget):
@@ -111,6 +111,8 @@ class GetIpClassMaskPage(QWidget):
             self.status_badge.style().unpolish(self.status_badge)
             self.status_badge.style().polish(self.status_badge)
             return
+
+        Database().save_f4_class_mask(ip)   #Stockage dans la DB
 
         class_name = ip_class.name.replace("CLASS_", "Classe ")
         self.result.setText(f"{class_name}\nMasque de classe: {mask}")

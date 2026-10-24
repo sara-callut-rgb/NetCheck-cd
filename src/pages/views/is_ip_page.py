@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ...services.logic import isIp, getIpError
-
+from ...services.database import Database
 
 
 class IsIpPage(QWidget):
@@ -95,6 +95,7 @@ class IsIpPage(QWidget):
         self.result_ip.setText(f"IP: {ip if ip else '-'}")
 
         if valid:
+            Database().save_f2_ip_valid(ip)   #Stockage dans la DB
             self.status_badge.setText("VALIDE")
             self.status_badge.setObjectName("badgeValid")
             self.status_badge.style().unpolish(self.status_badge)

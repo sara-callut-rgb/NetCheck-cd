@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ...services.logic import ClassMask, getIPClass, getIpError, isPrivateIp, isReservedIp
-
+from ...services.database import Database
 
 
 class GetIpClassPage(QWidget):
@@ -92,6 +92,8 @@ class GetIpClassPage(QWidget):
             self.status_badge.style().unpolish(self.status_badge)
             self.status_badge.style().polish(self.status_badge)
             return
+
+        Database().save_f3_ip_class(ip)  #Stockage dans la DB
 
         class_name = ip_class.name.replace("CLASS_", "Classe ")
         details = [class_name]

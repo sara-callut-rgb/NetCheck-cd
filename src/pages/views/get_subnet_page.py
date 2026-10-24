@@ -4,7 +4,6 @@ from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButto
 from ...services.logic import ClassMask, getIPClass, getIPClassMask, getIpError, getMaskError, getNetworkAddress, getSubnet, isClassFull, isIp, isSubnetMask, parseMask
 
 
-
 class GetSubnetPage(QWidget):
     def __init__(self):
         super().__init__()
