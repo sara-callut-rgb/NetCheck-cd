@@ -117,7 +117,7 @@ class GetSubnetSplitPage(QWidget):
             "L'outil calculera automatiquement le nouveau masque, le pas, les adresses de diffusion "
             "et la plage d'hôtes disponibles pour chaque sous-réseau."
         )
-        help_text.setObjectName("emptyStateText")
+        help_text.setObjectName("dashboardSubheading")
         help_text.setWordWrap(True)
         help_layout.addWidget(help_title)
         help_layout.addWidget(help_text)

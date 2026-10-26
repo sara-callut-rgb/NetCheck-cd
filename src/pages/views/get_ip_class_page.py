@@ -94,7 +94,7 @@ class GetIpClassPage(QWidget):
             "• Classe C (192-223) : Petits réseaux.\n"
             "Les plages privées (ex: 10.x.x.x, 192.168.x.x) sont réservées aux réseaux locaux."
         )
-        help_text.setObjectName("emptyStateText")
+        help_text.setObjectName("dashboardSubheading")
         help_text.setWordWrap(True)
         help_layout.addWidget(help_title)
         help_layout.addWidget(help_text)

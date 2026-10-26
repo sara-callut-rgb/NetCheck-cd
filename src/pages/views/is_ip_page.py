@@ -103,7 +103,7 @@ class IsIpPage(QWidget):
             "séparés par des points (ex: 192.168.1.1).\n"
             "Cet outil vérifie instantanément si la syntaxe de votre saisie est correcte."
         )
-        help_text.setObjectName("emptyStateText")
+        help_text.setObjectName("dashboardSubheading")
         help_text.setWordWrap(True)
         help_layout.addWidget(help_title)
         help_layout.addWidget(help_text)

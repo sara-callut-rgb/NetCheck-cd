@@ -97,7 +97,7 @@ class GetSubnetPage(QWidget):
             "L'opération ET logique (AND bit à bit) entre l'adresse IP et le masque de sous-réseau "
             "permet de déterminer l'adresse du réseau principal (majeur) ainsi que celle du sous-réseau personnalisé."
         )
-        help_text.setObjectName("emptyStateText")
+        help_text.setObjectName("dashboardSubheading")
         help_text.setWordWrap(True)
         help_layout.addWidget(help_title)
         help_layout.addWidget(help_text)

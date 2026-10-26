@@ -110,7 +110,7 @@ class SameNetworkPage(QWidget):
             "Cet outil vérifie dans les deux sens si deux machines (IP1 et IP2) peuvent communiquer "
             "directement sur le même segment réseau en tenant compte de leurs masques respectifs."
         )
-        help_text.setObjectName("emptyStateText")
+        help_text.setObjectName("dashboardSubheading")
         help_text.setWordWrap(True)
         help_layout.addWidget(help_title)
         help_layout.addWidget(help_text)

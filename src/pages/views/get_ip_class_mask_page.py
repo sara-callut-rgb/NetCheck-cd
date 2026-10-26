@@ -94,7 +94,7 @@ class GetIpClassMaskPage(QWidget):
             "• Classe B : 255.255.0.0 (/16)\n"
             "• Classe C : 255.255.255.0 (/24)"
         )
-        help_text.setObjectName("emptyStateText")
+        help_text.setObjectName("dashboardSubheading")
         help_text.setWordWrap(True)
         help_layout.addWidget(help_title)
         help_layout.addWidget(help_text)
