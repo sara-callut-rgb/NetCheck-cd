@@ -84,6 +84,27 @@ class GetSubnetPage(QWidget):
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
+
+        # --- Encadré d'aide F5 ---
+        self.help_card = QFrame()
+        self.help_card.setObjectName("resultCard")
+        help_layout = QVBoxLayout(self.help_card)
+        help_layout.setContentsMargins(16, 14, 16, 14)
+        help_layout.setSpacing(6)
+        help_title = QLabel(" Rappel : Calcul de Sous-réseau")
+        help_title.setObjectName("resultIp")
+        help_text = QLabel(
+            "L'opération ET logique (AND bit à bit) entre l'adresse IP et le masque de sous-réseau "
+            "permet de déterminer l'adresse du réseau principal (majeur) ainsi que celle du sous-réseau personnalisé."
+        )
+        help_text.setObjectName("emptyStateText")
+        help_text.setWordWrap(True)
+        help_layout.addWidget(help_title)
+        help_layout.addWidget(help_text)
+        card_layout.addWidget(self.help_card)
+        card_layout.addStretch(1)
+
+
         card_layout.addStretch(1)
 
         layout.addWidget(card)

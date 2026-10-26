@@ -79,6 +79,28 @@ class GetIpClassMaskPage(QWidget):
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
+
+        # --- Encadré d'aide F4 ---
+        self.help_card = QFrame()
+        self.help_card.setObjectName("resultCard")
+        help_layout = QVBoxLayout(self.help_card)
+        help_layout.setContentsMargins(16, 14, 16, 14)
+        help_layout.setSpacing(6)
+        help_title = QLabel(" Astuce : Masque Classful par défaut")
+        help_title.setObjectName("resultIp")
+        help_text = QLabel(
+            "Le masque par défaut (ou masque classful) dépend directement de la classe de l'adresse IP :\n"
+            "• Classe A : 255.0.0.0 (/8)\n"
+            "• Classe B : 255.255.0.0 (/16)\n"
+            "• Classe C : 255.255.255.0 (/24)"
+        )
+        help_text.setObjectName("emptyStateText")
+        help_text.setWordWrap(True)
+        help_layout.addWidget(help_title)
+        help_layout.addWidget(help_text)
+        card_layout.addWidget(self.help_card)
+        card_layout.addStretch(1)
+
         card_layout.addStretch(1)
 
         layout.addWidget(card)

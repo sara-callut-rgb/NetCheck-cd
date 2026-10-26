@@ -79,6 +79,28 @@ class GetIpClassPage(QWidget):
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
+
+        # --- Encadré d'aide F3 ---
+        self.help_card = QFrame()
+        self.help_card.setObjectName("resultCard")
+        help_layout = QVBoxLayout(self.help_card)
+        help_layout.setContentsMargins(16, 14, 16, 14)
+        help_layout.setSpacing(6)
+        help_title = QLabel(" Définition : Les Classes d'Adresses IP")
+        help_title.setObjectName("resultIp")
+        help_text = QLabel(
+            "• Classe A (0-127) : Grands réseaux.\n"
+            "• Classe B (128-191) : Réseaux moyens.\n"
+            "• Classe C (192-223) : Petits réseaux.\n"
+            "Les plages privées (ex: 10.x.x.x, 192.168.x.x) sont réservées aux réseaux locaux."
+        )
+        help_text.setObjectName("emptyStateText")
+        help_text.setWordWrap(True)
+        help_layout.addWidget(help_title)
+        help_layout.addWidget(help_text)
+        card_layout.addWidget(self.help_card)
+        card_layout.addStretch(1)
+
         card_layout.addStretch(1)
 
         layout.addWidget(card)

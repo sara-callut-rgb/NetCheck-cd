@@ -89,6 +89,28 @@ class IsIpPage(QWidget):
         card_layout.addLayout(form_row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
+
+        #encadré d'aide (remplissage du vide)
+        self.help_card = QFrame()
+        self.help_card.setObjectName("resultCard")
+        help_layout = QVBoxLayout(self.help_card)
+        help_layout.setContentsMargins(16, 14, 16, 14)
+        help_layout.setSpacing(6)
+        help_title = QLabel(" Astuce & Définition : Format IPv4")
+        help_title.setObjectName("resultIp")
+        help_text = QLabel(
+            "Une adresse IPv4 est composée de 4 nombres (les octets) compris entre 0 et 255, "
+            "séparés par des points (ex: 192.168.1.1).\n"
+            "Cet outil vérifie instantanément si la syntaxe de votre saisie est correcte."
+        )
+        help_text.setObjectName("emptyStateText")
+        help_text.setWordWrap(True)
+        help_layout.addWidget(help_title)
+        help_layout.addWidget(help_text)
+        card_layout.addWidget(self.help_card)
+        card_layout.addStretch(1)
+
+
         card_layout.addStretch(1)
 
         layout.addWidget(card)
@@ -119,7 +141,7 @@ class IsIpPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             self.result_message.setText(getIpError(ip) or "Adresse IP invalide")
             self.result_message.setStyleSheet("color: #ef4444;")
-            
+
     #fonction pour le bouton vider les champs
     def clear_fields(self):
         self.ip_input.clear()

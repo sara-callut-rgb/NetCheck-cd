@@ -97,6 +97,26 @@ class SameNetworkPage(QWidget):
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card)
+
+        # --- Encadré d'aide F6 ---
+        self.help_card = QFrame()
+        self.help_card.setObjectName("resultCard")
+        help_layout = QVBoxLayout(self.help_card)
+        help_layout.setContentsMargins(16, 14, 16, 14)
+        help_layout.setSpacing(6)
+        help_title = QLabel(" Fonctionnement : Vérification Bilatérale")
+        help_title.setObjectName("resultIp")
+        help_text = QLabel(
+            "Cet outil vérifie dans les deux sens si deux machines (IP1 et IP2) peuvent communiquer "
+            "directement sur le même segment réseau en tenant compte de leurs masques respectifs."
+        )
+        help_text.setObjectName("emptyStateText")
+        help_text.setWordWrap(True)
+        help_layout.addWidget(help_title)
+        help_layout.addWidget(help_text)
+        card_layout.addWidget(self.help_card)
+        card_layout.addStretch(1)
+
         card_layout.addStretch(1)
 
         layout.addWidget(card)

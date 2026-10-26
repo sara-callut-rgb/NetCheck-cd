@@ -103,6 +103,27 @@ class GetSubnetSplitPage(QWidget):
         card_layout.addLayout(row)
         card_layout.addWidget(self.empty_state)
         card_layout.addWidget(self.result_card, 1)
+
+        # --- Encadré d'aide F7 ---
+        self.help_card = QFrame()
+        self.help_card.setObjectName("resultCard")
+        help_layout = QVBoxLayout(self.help_card)
+        help_layout.setContentsMargins(16, 14, 16, 14)
+        help_layout.setSpacing(6)
+        help_title = QLabel(" Astuce : Plan d'adressage VLSM / Fixe")
+        help_title.setObjectName("resultIp")
+        help_text = QLabel(
+            "Entrez un réseau de départ, son masque et le nombre de sous-réseaux souhaités. "
+            "L'outil calculera automatiquement le nouveau masque, le pas, les adresses de diffusion "
+            "et la plage d'hôtes disponibles pour chaque sous-réseau."
+        )
+        help_text.setObjectName("emptyStateText")
+        help_text.setWordWrap(True)
+        help_layout.addWidget(help_title)
+        help_layout.addWidget(help_text)
+        card_layout.addWidget(self.help_card)
+        card_layout.addStretch(0) #  ici, F7 utilise un stretch à 0 car il y a le tableau
+
         card_layout.addStretch(0)
 
         layout.addWidget(card)
