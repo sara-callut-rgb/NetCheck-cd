@@ -123,25 +123,25 @@ class GetIpClassPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
 
-        Database().save_f3_ip_class(ip)  #Stockage dans la DB
-
+        Database().save_f3_ip_class(ip)  # Stockage dans la DB
         class_name = ip_class.name.replace("CLASS_", "Classe ")
-        details = [class_name]
-
+        
         is_reserved = isReservedIp(ip)
         is_private = isPrivateIp(ip)
-
+        
+        # Détermination de l'état avec un style "fluo" percutant
         if is_reserved:
-            details.append("Adresse réservée")
+            etat_texte = "<span style='color: #fef08a; font-weight: bold; background-color: #ca8a04; padding: 4px 10px; border-radius: 6px;'>Adresse réservée</span>"
+        elif is_private:
+            etat_texte = "<span style='color: #bae6fd; font-weight: bold; background-color: #0284c7; padding: 4px 10px; border-radius: 6px;'>Adresse privée</span>"
+        else:
+            etat_texte = "<span style='color: #bbf7d0; font-weight: bold; background-color: #16a34a; padding: 4px 10px; border-radius: 6px;'>Adresse publique</span>"
 
-        if is_private:
-            details.append("Adresse privée")
-
-        if not is_reserved and not is_private:
-            details.append("Adresse publique")
-
-        self.result.setText("\n".join(details))
-        self.result.setStyleSheet("color: #22c55e;")
+        # On affiche uniquement l'état en fluo (le badge du haut indique déjà la classe)
+        self.result.setText(etat_texte)
+        self.result.setStyleSheet("color: #f8fafc; font-size: 15px;")
+        
+        # Mise à jour du badge du haut selon la classe
         self.status_badge.setText(class_name.upper())
         self.status_badge.setObjectName("badgeValid")
         self.status_badge.style().unpolish(self.status_badge)
