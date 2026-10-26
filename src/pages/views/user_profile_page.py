@@ -107,8 +107,18 @@ class UserProfilePage(QWidget):
             refresh_button.clicked.connect(self.refresh_users)
             refresh_button.setFixedSize(120, 36)
 
+            # ==========================================
+            # AJOUT : Bouton d'urgence Admin 
+            # ==========================================
+            self.emergency_button = QPushButton("Urgence : Forcer MDP")
+            self.emergency_button.setObjectName("dangerButton")
+            self.emergency_button.setCursor(Qt.PointingHandCursor)
+            self.emergency_button.setFixedSize(160, 36)
+            self.emergency_button.clicked.connect(self.trigger_emergency_reset)
+
             header_row.addWidget(admin_title)
             header_row.addStretch(1)
+            header_row.addWidget(self.emergency_button)  # Ajout du bouton dans la ligne d'en-tête
             header_row.addWidget(refresh_button)
 
             # --- Table utilisateurs ---
@@ -391,3 +401,45 @@ class UserProfilePage(QWidget):
             return
 
         self.set_edit_message("Échec de la désactivation.", True)
+
+    #methode de déclenchement pour forcer le changement des MDP
+    def trigger_emergency_reset(self):
+        """
+        Déclenche l'enregistrement du clic d'urgence de l'administrateur.
+        Nécessite 2 clics d'administrateurs différents le même jour pour forcer le reset global.
+        """
+        confirm = QMessageBox.question(
+            self,
+            "Alerte de Sécurité",
+            "Voulez-vous signaler une urgence de sécurité ?\n"
+            "(Cette action nécessitera l'approbation de 2 administrateurs aujourd'hui "
+            "pour forcer la réinitialisation des mots de passe de tous les utilisateurs).",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        if confirm != QMessageBox.Yes:
+            return
+
+        # Appel de la méthode de sécurité configurée dans database.py
+        success, status, count = self.db.registerEmergencyResetClick()
+
+        if not success:
+            QMessageBox.warning(self, "Information", status)
+            return
+
+        if status == "TRIGGERED":
+            QMessageBox.information(
+                self, 
+                "Sécurité Activée", 
+                "Le second administrateur a confirmé. La réinitialisation globale a été forcée pour tous les comptes !"
+            )
+            self.refresh_users()
+        elif status == "WAITING_SECOND":
+            QMessageBox.information(
+                self, 
+                "Vote enregistré", 
+                f"Votre clic d'urgence a été pris en compte pour aujourd'hui ({count}/2 administrateurs distincts)."
+            )
+        
+
+        
