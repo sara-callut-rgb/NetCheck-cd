@@ -36,8 +36,16 @@ class GetIpClassPage(QWidget):
         run_button.setCursor(Qt.PointingHandCursor)
         run_button.clicked.connect(self.run_check)
 
+        #bouton vider les champs
+        clear_button = QPushButton("Vider")
+        clear_button.setObjectName("actionButton")
+        clear_button.setFixedSize(90, 46)
+        clear_button.setCursor(Qt.PointingHandCursor)
+        clear_button.clicked.connect(self.clear_fields)
+
         row.addWidget(self.ip_input, 1)
         row.addWidget(run_button)
+        row.addWidget(clear_button)
 
         # --- Etat vide ---
         self.empty_state = QFrame()
@@ -116,3 +124,9 @@ class GetIpClassPage(QWidget):
         self.status_badge.setObjectName("badgeValid")
         self.status_badge.style().unpolish(self.status_badge)
         self.status_badge.style().polish(self.status_badge)
+
+    #fonction vider les champs
+    def clear_fields(self):
+        self.ip_input.clear()
+        self.result_card.setVisible(False)
+        self.empty_state.setVisible(True)

@@ -37,8 +37,17 @@ class IsIpPage(QWidget):
         run_button.setCursor(Qt.PointingHandCursor)
         run_button.clicked.connect(self.run_check)
 
+        #ajout du bouton vider les champs dans la fonctionnalité 2
+        clear_button = QPushButton("Vider")
+        clear_button.setObjectName("actionButton") 
+        clear_button.setFixedWidth(90)
+        clear_button.setFixedHeight(48)
+        clear_button.setCursor(Qt.PointingHandCursor)
+        clear_button.clicked.connect(self.clear_fields)
+
         form_row.addWidget(self.ip_input, 1)
         form_row.addWidget(run_button)
+        form_row.addWidget(clear_button)
 
         # --- Etat vide ---
         self.empty_state = QFrame()
@@ -110,3 +119,10 @@ class IsIpPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             self.result_message.setText(getIpError(ip) or "Adresse IP invalide")
             self.result_message.setStyleSheet("color: #ef4444;")
+            
+    #fonction pour le bouton vider les champs
+    def clear_fields(self):
+        self.ip_input.clear()
+        self.result_card.setVisible(False)
+        self.empty_state.setVisible(True)
+        self.result_ip.setText("IP:")

@@ -51,11 +51,19 @@ class SameNetworkPage(QWidget):
         run_button.setCursor(Qt.PointingHandCursor)
         run_button.clicked.connect(self.run_check)
 
+        #boutton vide les champs
+        clear_button = QPushButton("Vider")
+        clear_button.setObjectName("actionButton")
+        clear_button.setFixedSize(90, 46)
+        clear_button.setCursor(Qt.PointingHandCursor)
+        clear_button.clicked.connect(self.clear_fields)
+
         row.addWidget(self.ip1_input, 1)
         row.addWidget(self.mask1_input, 1)
         row.addWidget(self.ip2_input, 1)
         row.addWidget(self.mask2_input, 1)
         row.addWidget(run_button)
+        row.addWidget(clear_button)
 
         # --- Etat vide ---
         self.empty_state = QFrame()
@@ -174,3 +182,12 @@ class SameNetworkPage(QWidget):
 
         self.status_badge.style().unpolish(self.status_badge)
         self.status_badge.style().polish(self.status_badge)
+
+    #fonction vider les champs
+    def clear_fields(self):
+        self.ip1_input.clear()
+        self.mask1_input.clear()
+        self.ip2_input.clear()
+        self.mask2_input.clear()
+        self.result_card.setVisible(False)
+        self.empty_state.setVisible(True)
