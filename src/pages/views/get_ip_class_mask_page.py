@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QComboBox, QPushButton, QVBoxLayout, QWidget
 
 from ...services.logic import ClassMask, getIPClass, getIPClassMask, getIpError
 from ...services.database import Database
@@ -24,11 +24,21 @@ class GetIpClassMaskPage(QWidget):
         row = QHBoxLayout()
         row.setSpacing(10)
 
-        self.ip_input = QLineEdit()
-        self.ip_input.setPlaceholderText("IPv4")
+        # --- Champ de saisie IP ---
+        self.ip_input = QComboBox()
+        self.ip_input.setEditable(True)
+        self.ip_input.setInsertPolicy(QComboBox.NoInsert)
+        self.ip_input.lineEdit().setPlaceholderText("IPv4")
         self.ip_input.setObjectName("primaryInput")
         self.ip_input.setFixedHeight(46)
-        self.ip_input.returnPressed.connect(self.run_check)
+        self.ip_input.lineEdit().returnPressed.connect(self.run_check)
+
+        for field in (self.ip_input,):
+            field.view().pressed.connect(lambda index: self.on_param_selected(index.row()))
+            field.view().activated.connect(lambda index: self.on_param_selected(index.row()))
+
+        self.selected_id = None
+        self.load_params()
 
         run_button = QPushButton("Obtenir le masque")
         run_button.setObjectName("actionButton")
@@ -105,10 +115,21 @@ class GetIpClassMaskPage(QWidget):
 
         layout.addWidget(card)
 
+    #Récupération des paramètres sauvegardés dans la base de données
+    def load_params(self):
+        # --- Anciens paramètres de la base ---
+        self.ip_input.clear()
+        for row_id, saved_ip in Database().list_single_ip_params("f4_class_mask"):
+            self.ip_input.addItem(saved_ip, row_id)
+        self.ip_input.setCurrentIndex(-1)
+        self.selected_id = None
+
+    def on_param_selected(self, index):
+        self.selected_id = self.ip_input.itemData(index)
 
     def run_check(self):
         # --- Execution du calcul de masque ---
-        ip = self.ip_input.text().strip()
+        ip = self.ip_input.currentText().strip()
         ip_class = getIPClass(ip)
         mask = getIPClassMask(ip)
 
@@ -142,7 +163,13 @@ class GetIpClassMaskPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
 
-        Database().save_f4_class_mask(ip)   #Stockage dans la DB
+        #Stockage dans la DB
+        if self.selected_id:
+            Database().update_single_ip_param("f4_class_mask", self.selected_id, ip)
+        elif self.ip_input.findText(ip) == -1:
+            Database().save_f4_class_mask(ip)
+        self.load_params()
+        self.ip_input.setEditText(ip)
 
         class_name = ip_class.name.replace("CLASS_", "Classe ")
         self.result.setText(f"{class_name}\nMasque de classe: {mask}")
@@ -154,6 +181,7 @@ class GetIpClassMaskPage(QWidget):
 
     #fonction vider les champs
     def clear_fields(self):
-        self.ip_input.clear()
+        self.ip_input.clearEditText()
+        self.selected_id = None
         self.result_card.setVisible(False)
         self.empty_state.setVisible(True)

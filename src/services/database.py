@@ -481,6 +481,51 @@ class Database:
         finally:
             cursor.close()
 
+    #Liste des paramètres IP déjà enregistrés pour la fonctionnalité 5
+    def list_f5_params(self):
+        """Renvoie les paramètres de la fonctionnalité 5 déjà enregistrés (id, ip_input, mask_input)."""
+        cursor = self._cursor()
+        if cursor is None:
+            return []
+        try:
+            cursor.execute("SELECT id, ip_input, mask_input FROM f5_subnet ORDER BY modified_at DESC, id DESC")
+            return cursor.fetchall()
+        except sqlite3.Error:
+            return []
+        finally:
+            cursor.close()
+
+    def update_f5_subnet(self, row_id: int, ip_input: str, mask_input: str, employee_id: str = None):
+        """
+        Modifie une ligne déjà enregistrée de la fonctionnalité 5 et met à jour le tag employé.
+        Si la nouvelle combinaison (IP, masque) existe déjà dans une autre ligne, on supprime
+        la ligne modifiée et on rafraîchit l'existante (la combinaison est UNIQUE).
+        """
+        if not employee_id and Database.current_session:
+            employee_id = Database.current_session.get("employee_id", "EMP-001")
+        cursor = self._cursor()
+        if cursor is None:
+            return False
+        try:
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute("""
+                UPDATE f5_subnet
+                SET ip_input = ?, mask_input = ?, last_modified_by = ?, modified_at = ?
+                WHERE id = ?
+            """, (ip_input, mask_input, employee_id, now_str, row_id))
+            self._connection().commit()
+            return True
+        except sqlite3.IntegrityError:
+            self._connection().rollback()
+            cursor.execute("DELETE FROM f5_subnet WHERE id = ?", (row_id,))
+            self._connection().commit()
+            return self.save_f5_subnet(ip_input, mask_input, employee_id)
+        except sqlite3.Error:
+            self._connection().rollback()
+            return False
+        finally:
+            cursor.close()
+
     def save_f6_same_network(self, ip1: str, mask1: str, ip2: str, mask2: str, employee_id: str = None):
         """
         Enregistre les paramètres d'entrée de la Fonctionnalité 6 (sans le résultat).
@@ -513,6 +558,50 @@ class Database:
     # =========================================================================
     # MÉTHODES POUR SARA (FONCTIONNALITÉS 1, 2, 3, 4 ET 7)
     # =========================================================================
+    def list_f6_params(self):
+        """Renvoie les paramètres de la fonctionnalité 6 déjà enregistrés (id, ip1, mask1, ip2, mask2)."""
+        cursor = self._cursor()
+        if cursor is None:
+            return []
+        try:
+            cursor.execute("SELECT id, ip1_input, mask1_input, ip2_input, mask2_input FROM f6_same_net ORDER BY modified_at DESC, id DESC")
+            return cursor.fetchall()
+        except sqlite3.Error:
+            return []
+        finally:
+            cursor.close()
+
+    def update_f6_same_network(self, row_id: int, ip1: str, mask1: str, ip2: str, mask2: str, employee_id: str = None):
+        """
+        Modifie une ligne déjà enregistrée de la fonctionnalité 6 et met à jour le tag employé.
+        Si la nouvelle combinaison existe déjà dans une autre ligne, on supprime la ligne modifiée
+        et on rafraîchit l'existante (la combinaison est UNIQUE).
+        """
+        if not employee_id and Database.current_session:
+            employee_id = Database.current_session.get("employee_id", "EMP-001")
+        cursor = self._cursor()
+        if cursor is None:
+            return False
+        try:
+            now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cursor.execute("""
+                UPDATE f6_same_net
+                SET ip1_input = ?, mask1_input = ?, ip2_input = ?, mask2_input = ?,
+                    last_modified_by = ?, modified_at = ?
+                WHERE id = ?
+            """, (ip1, mask1, ip2, mask2, employee_id, now_str, row_id))
+            self._connection().commit()
+            return True
+        except sqlite3.IntegrityError:
+            self._connection().rollback()
+            cursor.execute("DELETE FROM f6_same_net WHERE id = ?", (row_id,))
+            self._connection().commit()
+            return self.save_f6_same_network(ip1, mask1, ip2, mask2, employee_id)
+        except sqlite3.Error:
+            self._connection().rollback()
+            return False
+        finally:
+            cursor.close()
 
     def save_f1_cidr_table(self, cidr_rows: list):
         """
@@ -563,6 +652,35 @@ class Database:
         finally:
             cursor.close()
 
+    #Stockage des paramètres IP déjà enregistrés pour les fonctionnalités 2, 3 et 4
+    def list_single_ip_params(self, table_name: str):
+        """Renvoie les paramètres IP déjà enregistrés (id, ip_input) pour F2, F3 ou F4."""
+        cursor = self._cursor()
+        if cursor is None:
+            return []
+        try:
+            cursor.execute(f"SELECT id, ip_input FROM {table_name} ORDER BY id DESC")
+            return cursor.fetchall()
+        except sqlite3.Error:
+            return []
+        finally:
+            cursor.close()
+
+    def update_single_ip_param(self, table_name: str, row_id: int, ip_input: str):
+        """Modifie un paramètre IP déjà enregistré (F2, F3 ou F4)."""
+        cursor = self._cursor()
+        if cursor is None:
+            return False
+        try:
+            cursor.execute(f"UPDATE {table_name} SET ip_input = ? WHERE id = ?", (ip_input, row_id))
+            self._connection().commit()
+            return True
+        except sqlite3.Error:
+            self._connection().rollback()
+            return False
+        finally:
+            cursor.close()
+
     def save_f7_subnet_split(self, network_ip: str, base_mask: str, nb_subnets: int, splits_list: list, employee_id: str = None):
         """
         Fonctionnalité 7 (Nouvelle) : Stocke la découpe en sous-réseaux classique
@@ -580,6 +698,67 @@ class Database:
                 INSERT INTO f7_subnet_split (network_ip, base_mask, nb_subnets, splits_json, last_modified_by)
                 VALUES (?, ?, ?, ?, ?)
             """, (network_ip, base_mask, nb_subnets, splits_json, employee_id))
+            self._connection().commit()
+            return True
+        except sqlite3.Error:
+            self._connection().rollback()
+            return False
+        finally:
+            cursor.close()
+
+#Liste des paramètres IP déjà enregistrés pour la fonctionnalité 7
+    def list_f7_params(self):
+        """Renvoie les paramètres de la fonctionnalité 7 déjà enregistrés (id, network_ip, base_mask, nb_subnets)."""
+        cursor = self._cursor()
+        if cursor is None:
+            return []
+        try:
+            cursor.execute("SELECT id, network_ip, base_mask, nb_subnets FROM f7_subnet_split ORDER BY created_at DESC, id DESC")
+            return cursor.fetchall()
+        except sqlite3.Error:
+            return []
+        finally:
+            cursor.close()
+
+    def find_f7_subnet_split(self, network_ip: str, base_mask: str, nb_subnets: int, exclude_id: int = None):
+        """Renvoie l'id d'une ligne F7 ayant exactement ces paramètres (ou None)."""
+        cursor = self._cursor()
+        if cursor is None:
+            return None
+        try:
+            cursor.execute("""
+                SELECT id FROM f7_subnet_split
+                WHERE network_ip = ? AND base_mask = ? AND nb_subnets = ? AND id != ?
+            """, (network_ip, base_mask, nb_subnets, exclude_id or 0))
+            record = cursor.fetchone()
+            return record[0] if record else None
+        except sqlite3.Error:
+            return None
+        finally:
+            cursor.close()
+
+    def update_f7_subnet_split(self, row_id: int, network_ip: str, base_mask: str, nb_subnets: int, splits_list: list, employee_id: str = None):
+        """
+        Modifie une ligne déjà enregistrée de la fonctionnalité 7 (paramètres, découpe et tag employé).
+        Si ces paramètres existent déjà dans une autre ligne, on supprime la ligne modifiée
+        et on met à jour l'existante pour éviter les doublons.
+        """
+        if not employee_id and Database.current_session:
+            employee_id = Database.current_session.get("employee_id", "EMP-001")
+        other_id = self.find_f7_subnet_split(network_ip, base_mask, nb_subnets, row_id)
+        cursor = self._cursor()
+        if cursor is None:
+            return False
+        try:
+            if other_id:
+                cursor.execute("DELETE FROM f7_subnet_split WHERE id = ?", (row_id,))
+                row_id = other_id
+            splits_json = json.dumps(splits_list, ensure_ascii=False)
+            cursor.execute("""
+                UPDATE f7_subnet_split
+                SET network_ip = ?, base_mask = ?, nb_subnets = ?, splits_json = ?, last_modified_by = ?
+                WHERE id = ?
+            """, (network_ip, base_mask, nb_subnets, splits_json, employee_id, row_id))
             self._connection().commit()
             return True
         except sqlite3.Error:

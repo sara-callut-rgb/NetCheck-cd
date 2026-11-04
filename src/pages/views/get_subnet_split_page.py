@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 
 from ...services.database import Database
 from ...services.logic import getSubnetSplit, parseMask
@@ -25,21 +25,34 @@ class GetSubnetSplitPage(QWidget):
         row = QHBoxLayout()
         row.setSpacing(10)
 
-        self.ip_input = QLineEdit()
-        self.ip_input.setPlaceholderText("IPv4 du réseau")
+        self.ip_input = QComboBox()
+        self.ip_input.setEditable(True)
+        self.ip_input.setInsertPolicy(QComboBox.NoInsert)
+        self.ip_input.lineEdit().setPlaceholderText("IPv4 du réseau")
         self.ip_input.setObjectName("primaryInput")
         self.ip_input.setFixedHeight(46)
 
-        self.mask_input = QLineEdit()
-        self.mask_input.setPlaceholderText("Masque")
+        self.mask_input = QComboBox()
+        self.mask_input.setEditable(True)
+        self.mask_input.setInsertPolicy(QComboBox.NoInsert)
+        self.mask_input.lineEdit().setPlaceholderText("Masque")
         self.mask_input.setObjectName("primaryInput")
         self.mask_input.setFixedHeight(46)
 
-        self.nb_input = QLineEdit()
-        self.nb_input.setPlaceholderText("Nombre de SR")
+        self.nb_input = QComboBox()
+        self.nb_input.setEditable(True)
+        self.nb_input.setInsertPolicy(QComboBox.NoInsert)
+        self.nb_input.lineEdit().setPlaceholderText("Nombre de SR")
         self.nb_input.setObjectName("primaryInput")
         self.nb_input.setFixedHeight(46)
-        self.nb_input.returnPressed.connect(self.run_check)
+        self.nb_input.lineEdit().returnPressed.connect(self.run_check)
+
+        for field in (self.ip_input, self.mask_input, self.nb_input):
+            field.view().pressed.connect(lambda index: self.on_param_selected(index.row()))
+            field.view().activated.connect(lambda index: self.on_param_selected(index.row()))
+
+        self.selected_id = None
+        self.load_params()
 
         run_button = QPushButton("Découper")
         run_button.setObjectName("actionButton")
@@ -128,6 +141,22 @@ class GetSubnetSplitPage(QWidget):
 
         layout.addWidget(card)
 
+    #Récupération des paramètres sauvegardés dans la base de données
+    def load_params(self):
+        for field in (self.ip_input, self.mask_input, self.nb_input):
+            field.clear()
+        for row_id, saved_ip, saved_mask, saved_nb in Database().list_f7_params():
+            self.ip_input.addItem(saved_ip, row_id)
+            self.mask_input.addItem(saved_mask, row_id)
+            self.nb_input.addItem(str(saved_nb), row_id)
+        for field in (self.ip_input, self.mask_input, self.nb_input):
+            field.setCurrentIndex(-1)
+        self.selected_id = None
+
+    def on_param_selected(self, index):
+        self.selected_id = self.ip_input.itemData(index)
+        for field in (self.ip_input, self.mask_input, self.nb_input):
+            field.setCurrentIndex(index)
 
     def show_error(self, message):
         # --- Affichage d'une erreur (le tableau est masqué) ---
@@ -143,9 +172,9 @@ class GetSubnetSplitPage(QWidget):
 
     def run_check(self):
         # --- Execution de la decoupe en sous-reseaux ---
-        ip = self.ip_input.text().strip()
-        mask = self.mask_input.text().strip()
-        nb_text = self.nb_input.text().strip()
+        ip = self.ip_input.currentText().strip()
+        mask = self.mask_input.currentText().strip()
+        nb_text = self.nb_input.currentText().strip()
 
         self.empty_state.setVisible(False)
         self.result_card.setVisible(True)
@@ -160,8 +189,16 @@ class GetSubnetSplitPage(QWidget):
             return
 
         # Stockage des paramètres et de la découpe, avec le n° d'employé connecté
-        Database().save_f7_subnet_split(rows[0]["address"], parseMask(mask), int(nb_text), rows)
-
+        db = Database()
+        row_id = self.selected_id or db.find_f7_subnet_split(rows[0]["address"], parseMask(mask), int(nb_text))
+        if row_id:
+            db.update_f7_subnet_split(row_id, rows[0]["address"], parseMask(mask), int(nb_text), rows)
+        else:
+            db.save_f7_subnet_split(rows[0]["address"], parseMask(mask), int(nb_text), rows)
+        self.load_params()
+        self.ip_input.setEditText(ip)
+        self.mask_input.setEditText(mask)
+        self.nb_input.setEditText(nb_text)
         # Remplissage du tableau
         self.table.setRowCount(len(rows))
         for row_idx, sr in enumerate(rows):
@@ -179,9 +216,10 @@ class GetSubnetSplitPage(QWidget):
 
     #fonction vider les champs
     def clear_fields(self):
-        self.ip_input.clear()
-        self.mask_input.clear()
-        self.nb_input.clear()
+        self.ip_input.clearEditText()
+        self.mask_input.clearEditText()
+        self.nb_input.clearEditText()
+        self.selected_id = None
         self.table.setRowCount(0)
         self.table.setVisible(False)
         self.result_card.setVisible(False)

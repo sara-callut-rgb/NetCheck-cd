@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ...services.logic import isIp, getIpError
 from ...services.database import Database
@@ -24,11 +24,21 @@ class IsIpPage(QWidget):
         form_row = QHBoxLayout()
         form_row.setSpacing(10)
 
-        self.ip_input = QLineEdit()
-        self.ip_input.setPlaceholderText("IPv4")
+        # --- Champ de saisie ---
+        self.ip_input = QComboBox()
+        self.ip_input.setEditable(True)
+        self.ip_input.setInsertPolicy(QComboBox.NoInsert)
+        self.ip_input.lineEdit().setPlaceholderText("IPv4")
         self.ip_input.setObjectName("primaryInput")
         self.ip_input.setFixedHeight(48)
-        self.ip_input.returnPressed.connect(self.run_check)
+        self.ip_input.lineEdit().returnPressed.connect(self.run_check)
+
+        for field in (self.ip_input,):
+            field.view().pressed.connect(lambda index: self.on_param_selected(index.row()))
+            field.view().activated.connect(lambda index: self.on_param_selected(index.row()))
+
+        self.selected_id = None
+        self.load_params()
 
         run_button = QPushButton("Vérifier")
         run_button.setObjectName("actionButton")
@@ -115,10 +125,23 @@ class IsIpPage(QWidget):
 
         layout.addWidget(card)
 
+    # --- Fonctions ---
+    def load_params(self):
+        # --- Anciens paramètres de la base ---
+        self.ip_input.clear()
+        for row_id, saved_ip in Database().list_single_ip_params("f2_ip_valid"):
+            self.ip_input.addItem(saved_ip, row_id)
+        self.ip_input.setCurrentIndex(-1)
+        self.selected_id = None
+
+
+    def on_param_selected(self, index):
+        self.selected_id = self.ip_input.itemData(index)
+
 
     def run_check(self):
         # --- Execution de la verification ---
-        ip = self.ip_input.text().strip()
+        ip = self.ip_input.currentText().strip()
         valid = isIp(ip)
 
         self.empty_state.setVisible(False)
@@ -126,7 +149,13 @@ class IsIpPage(QWidget):
         self.result_ip.setText(f"IP: {ip if ip else '-'}")
 
         if valid:
-            Database().save_f2_ip_valid(ip)   #Stockage dans la DB
+            #Stockage dans la DB
+            if self.selected_id:
+                Database().update_single_ip_param("f2_ip_valid", self.selected_id, ip)
+            elif self.ip_input.findText(ip) == -1:
+                Database().save_f2_ip_valid(ip)
+            self.load_params()
+            self.ip_input.setEditText(ip)
             self.status_badge.setText("VALIDE")
             self.status_badge.setObjectName("badgeValid")
             self.status_badge.style().unpolish(self.status_badge)
@@ -144,7 +173,8 @@ class IsIpPage(QWidget):
 
     #fonction pour le bouton vider les champs
     def clear_fields(self):
-        self.ip_input.clear()
+        self.ip_input.clearEditText()
+        self.selected_id = None
         self.result_card.setVisible(False)
         self.empty_state.setVisible(True)
         self.result_ip.setText("IP:")

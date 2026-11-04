@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ...services.logic import areIpsInSameNetwork, getIpError, getMaskError, getNetworkAddress, isIp, isSubnetMask, parseMask
 from ...services.database import Database
@@ -24,26 +24,41 @@ class SameNetworkPage(QWidget):
         row = QHBoxLayout()
         row.setSpacing(10)
 
-        self.ip1_input = QLineEdit()
-        self.ip1_input.setPlaceholderText("IPv4 1")
+        self.ip1_input = QComboBox()
+        self.ip1_input.setEditable(True)
+        self.ip1_input.setInsertPolicy(QComboBox.NoInsert)
+        self.ip1_input.lineEdit().setPlaceholderText("IPv4 1")
         self.ip1_input.setObjectName("primaryInput")
         self.ip1_input.setFixedHeight(46)
 
-        self.mask1_input = QLineEdit()
-        self.mask1_input.setPlaceholderText("Masque 1")
+        self.mask1_input = QComboBox()
+        self.mask1_input.setEditable(True)
+        self.mask1_input.setInsertPolicy(QComboBox.NoInsert)
+        self.mask1_input.lineEdit().setPlaceholderText("Masque 1")
         self.mask1_input.setObjectName("primaryInput")
         self.mask1_input.setFixedHeight(46)
 
-        self.ip2_input = QLineEdit()
-        self.ip2_input.setPlaceholderText("IPv4 2")
+        self.ip2_input = QComboBox()
+        self.ip2_input.setEditable(True)
+        self.ip2_input.setInsertPolicy(QComboBox.NoInsert)
+        self.ip2_input.lineEdit().setPlaceholderText("IPv4 2")
         self.ip2_input.setObjectName("primaryInput")
         self.ip2_input.setFixedHeight(46)
-    
-        self.mask2_input = QLineEdit()
-        self.mask2_input.setPlaceholderText("Masque 2")
+
+        self.mask2_input = QComboBox()
+        self.mask2_input.setEditable(True)
+        self.mask2_input.setInsertPolicy(QComboBox.NoInsert)
+        self.mask2_input.lineEdit().setPlaceholderText("Masque 2")
         self.mask2_input.setObjectName("primaryInput")
         self.mask2_input.setFixedHeight(46)
-        self.mask2_input.returnPressed.connect(self.run_check)
+        self.mask2_input.lineEdit().returnPressed.connect(self.run_check)
+
+        for field in (self.ip1_input, self.mask1_input, self.ip2_input, self.mask2_input):
+            field.view().pressed.connect(lambda index: self.on_param_selected(index.row()))
+            field.view().activated.connect(lambda index: self.on_param_selected(index.row()))
+
+        self.selected_id = None
+        self.load_params()
 
         run_button = QPushButton("Vérifier")
         run_button.setObjectName("actionButton")
@@ -121,13 +136,30 @@ class SameNetworkPage(QWidget):
 
         layout.addWidget(card)
 
+    #Récupération des paramètres sauvegardés dans la base de données
+    def load_params(self):
+        for field in (self.ip1_input, self.mask1_input, self.ip2_input, self.mask2_input):
+            field.clear()
+        for row_id, saved_ip1, saved_mask1, saved_ip2, saved_mask2 in Database().list_f6_params():
+            self.ip1_input.addItem(saved_ip1, row_id)
+            self.mask1_input.addItem(saved_mask1, row_id)
+            self.ip2_input.addItem(saved_ip2, row_id)
+            self.mask2_input.addItem(saved_mask2, row_id)
+        for field in (self.ip1_input, self.mask1_input, self.ip2_input, self.mask2_input):
+            field.setCurrentIndex(-1)
+        self.selected_id = None
+
+    def on_param_selected(self, index):
+        self.selected_id = self.ip1_input.itemData(index)
+        for field in (self.ip1_input, self.mask1_input, self.ip2_input, self.mask2_input):
+            field.setCurrentIndex(index)
 
     def run_check(self):
         # --- Execution de la comparaison ---
-        ip1 = self.ip1_input.text().strip()
-        mask1 = self.mask1_input.text().strip()
-        ip2 = self.ip2_input.text().strip()
-        mask2 = self.mask2_input.text().strip()
+        ip1 = self.ip1_input.currentText().strip()
+        mask1 = self.mask1_input.currentText().strip()
+        ip2 = self.ip2_input.currentText().strip()
+        mask2 = self.mask2_input.currentText().strip()
         normalized_mask1 = parseMask(mask1)
         normalized_mask2 = parseMask(mask2)
 
@@ -169,9 +201,16 @@ class SameNetworkPage(QWidget):
         # AJOUT : Enregistrement en base de données SQLite 3
         # avec le tag de l'employé connecté (et écrasement si existant)
         # ==========================================
-        from ...services.database import Database
         db = Database()
-        db.save_f6_same_network(ip1, normalized_mask1, ip2, normalized_mask2)
+        if self.selected_id:
+            db.update_f6_same_network(self.selected_id, ip1, normalized_mask1, ip2, normalized_mask2)
+        else:
+            db.save_f6_same_network(ip1, normalized_mask1, ip2, normalized_mask2)
+        self.load_params()
+        self.ip1_input.setEditText(ip1)
+        self.mask1_input.setEditText(mask1)
+        self.ip2_input.setEditText(ip2)
+        self.mask2_input.setEditText(mask2)
 
         if same_network:
             self.result.setText("Même réseau dans les deux sens")
@@ -205,9 +244,10 @@ class SameNetworkPage(QWidget):
 
     #fonction vider les champs
     def clear_fields(self):
-        self.ip1_input.clear()
-        self.mask1_input.clear()
-        self.ip2_input.clear()
-        self.mask2_input.clear()
+        self.ip1_input.clearEditText()
+        self.mask1_input.clearEditText()
+        self.ip2_input.clearEditText()
+        self.mask2_input.clearEditText()
+        self.selected_id = None
         self.result_card.setVisible(False)
         self.empty_state.setVisible(True)

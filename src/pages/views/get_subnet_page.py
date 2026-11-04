@@ -1,8 +1,8 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 from ...services.logic import ClassMask, getIPClass, getIPClassMask, getIpError, getMaskError, getNetworkAddress, getSubnet, isClassFull, isIp, isSubnetMask, parseMask
-
+from ...services.database import Database
 
 class GetSubnetPage(QWidget):
     def __init__(self):
@@ -23,16 +23,28 @@ class GetSubnetPage(QWidget):
         row = QHBoxLayout()
         row.setSpacing(10)
 
-        self.ip_input = QLineEdit()
-        self.ip_input.setPlaceholderText("IPv4")
+        #Liste des paramètres déjà enregistrés
+        self.ip_input = QComboBox()
+        self.ip_input.setEditable(True)
+        self.ip_input.setInsertPolicy(QComboBox.NoInsert)
+        self.ip_input.lineEdit().setPlaceholderText("IPv4")
         self.ip_input.setObjectName("primaryInput")
         self.ip_input.setFixedHeight(46)
 
-        self.mask_input = QLineEdit()
-        self.mask_input.setPlaceholderText("Masque classful")
+        self.mask_input = QComboBox()
+        self.mask_input.setEditable(True)
+        self.mask_input.setInsertPolicy(QComboBox.NoInsert)
+        self.mask_input.lineEdit().setPlaceholderText("Masque classful")
         self.mask_input.setObjectName("primaryInput")
         self.mask_input.setFixedHeight(46)
-        self.mask_input.returnPressed.connect(self.run_check)
+        self.mask_input.lineEdit().returnPressed.connect(self.run_check)
+
+        for field in (self.ip_input, self.mask_input):
+            field.view().pressed.connect(lambda index: self.on_param_selected(index.row()))
+            field.view().activated.connect(lambda index: self.on_param_selected(index.row()))
+
+        self.selected_id = None
+        self.load_params()
 
         run_button = QPushButton("Calculer")
         run_button.setObjectName("actionButton")
@@ -109,11 +121,26 @@ class GetSubnetPage(QWidget):
 
         layout.addWidget(card)
 
+    #Récupération des paramètres sauvegardés dans la base de données
+    def load_params(self):
+        self.ip_input.clear()
+        self.mask_input.clear()
+        for row_id, saved_ip, saved_mask in Database().list_f5_params():
+            self.ip_input.addItem(saved_ip, row_id)
+            self.mask_input.addItem(saved_mask, row_id)
+        self.ip_input.setCurrentIndex(-1)
+        self.mask_input.setCurrentIndex(-1)
+        self.selected_id = None
+
+    def on_param_selected(self, index):
+        self.selected_id = self.ip_input.itemData(index)
+        self.ip_input.setCurrentIndex(index)
+        self.mask_input.setCurrentIndex(index)
 
     def run_check(self):
         # --- Execution du calcul de sous-reseau ---
-        ip = self.ip_input.text().strip()
-        mask = self.mask_input.text().strip()
+        ip = self.ip_input.currentText().strip()
+        mask = self.mask_input.currentText().strip()
         normalized_mask = parseMask(mask)
 
         self.empty_state.setVisible(False)
@@ -193,9 +220,14 @@ class GetSubnetPage(QWidget):
         # AJOUT : Enregistrement en base de données SQLite 3
         # avec le tag de l'employé connecté (et écrasement si existant)
         # ==========================================
-        from ...services.database import Database
         db = Database()
-        db.save_f5_subnet(ip, normalized_mask)
+        if self.selected_id:
+            db.update_f5_subnet(self.selected_id, ip, normalized_mask)
+        else:
+            db.save_f5_subnet(ip, normalized_mask)
+        self.load_params()
+        self.ip_input.setEditText(ip)
+        self.mask_input.setEditText(mask)
 
         self.result.setText(
             "Réseau de classe (Majeur) : "
@@ -211,7 +243,8 @@ class GetSubnetPage(QWidget):
 
     #fonction vider les champs
     def clear_fields(self):
-        self.ip_input.clear()
-        self.mask_input.clear()
+        self.selected_id = None
+        self.ip_input.clearEditText()
+        self.mask_input.clearEditText()
         self.result_card.setVisible(False)
         self.empty_state.setVisible(True)

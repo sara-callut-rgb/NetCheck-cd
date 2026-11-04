@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QVBoxLayout, QWidget, QComboBox, QSpacerItem, QSizePolicy
 
 from ...services.logic import ClassMask, getIPClass, getIpError, isPrivateIp, isReservedIp
 from ...services.database import Database
@@ -24,11 +24,21 @@ class GetIpClassPage(QWidget):
         row = QHBoxLayout()
         row.setSpacing(10)
 
-        self.ip_input = QLineEdit()
-        self.ip_input.setPlaceholderText("IPv4")
+        #═--- Champ de saisie IP ---
+        self.ip_input = QComboBox()
+        self.ip_input.setEditable(True)
+        self.ip_input.setInsertPolicy(QComboBox.NoInsert)
+        self.ip_input.lineEdit().setPlaceholderText("IPv4")
         self.ip_input.setObjectName("primaryInput")
         self.ip_input.setFixedHeight(46)
-        self.ip_input.returnPressed.connect(self.run_check)
+        self.ip_input.lineEdit().returnPressed.connect(self.run_check)
+
+        for field in (self.ip_input,):
+            field.view().pressed.connect(lambda index: self.on_param_selected(index.row()))
+            field.view().activated.connect(lambda index: self.on_param_selected(index.row()))
+        
+        self.selected_id = None
+        self.load_params()
 
         run_button = QPushButton("Obtenir la classe")
         run_button.setObjectName("actionButton")
@@ -105,10 +115,21 @@ class GetIpClassPage(QWidget):
 
         layout.addWidget(card)
 
+    #Récupération des paramètres sauvegardés dans la base de données
+    def load_params(self):
+        # --- Anciens paramètres de la base ---
+        self.ip_input.clear()
+        for row_id, saved_ip in Database().list_single_ip_params("f3_ip_class"):
+            self.ip_input.addItem(saved_ip, row_id)
+        self.ip_input.setCurrentIndex(-1)
+        self.selected_id = None
+
+    def on_param_selected(self, index):
+        self.selected_id = self.ip_input.itemData(index)
 
     def run_check(self):
         # --- Execution du calcul de classe ---
-        ip = self.ip_input.text().strip()
+        ip = self.ip_input.currentText().strip()
         ip_class = getIPClass(ip)
 
         self.empty_state.setVisible(False)
@@ -123,7 +144,13 @@ class GetIpClassPage(QWidget):
             self.status_badge.style().polish(self.status_badge)
             return
 
-        Database().save_f3_ip_class(ip)  # Stockage dans la DB
+        #Sauvegarde de l'IP dans la base de données
+        if self.selected_id:
+            Database().update_single_ip_param("f3_ip_class", self.selected_id, ip)
+        elif self.ip_input.findText(ip) == -1:
+            Database().save_f3_ip_class(ip)
+        self.load_params()
+        self.ip_input.setEditText(ip)
         class_name = ip_class.name.replace("CLASS_", "Classe ")
         
         is_reserved = isReservedIp(ip)
@@ -149,6 +176,7 @@ class GetIpClassPage(QWidget):
 
     #fonction vider les champs
     def clear_fields(self):
-        self.ip_input.clear()
+        self.ip_input.clearEditText()
+        self.selected_id = None
         self.result_card.setVisible(False)
         self.empty_state.setVisible(True)
